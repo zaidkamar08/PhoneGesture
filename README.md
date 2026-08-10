@@ -25,6 +25,8 @@ your home WiFi. No app install on the phone, no rooting, no rebooting.
      Phones block camera access on non-secure ("http") pages, so this is
      required.
 
+     ->or else we can install manually using 'pip install flask' and 'pip install pyopenssl"
+
 ## Running it
 
 1. Find your laptop's local IP address (this is the address your phone
