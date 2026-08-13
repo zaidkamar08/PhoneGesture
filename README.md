@@ -76,8 +76,4 @@ your home WiFi. No app install on the phone, no rooting, no rebooting.
   once (Windows will usually pop up an "Allow access?" prompt the first
   time you run the script — click Allow).
 
-## What's next
-Once this is working reliably, step 2 adds **gesture recognition** —
-the laptop will look at each incoming picture and detect hand movements
-(wave, swipe, fist), then trigger an action like skipping a song or
-muting the volume.
+]
