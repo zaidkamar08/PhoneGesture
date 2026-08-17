@@ -51,18 +51,21 @@ detector = HandLandmarker.create_from_options(
 
 last_gesture = None
 last_action_time = 0
-COOLDOWN_SECONDS = 2 # don't repeat the same action faster than this
+COOLDOWN_SECONDS = 1.5  # don't repeat the same action faster than this
 last_status = "No hand detected"
 
 
 def classify_gesture(landmarks):
     """
     landmarks: 21 (x, y) points, each 0-1 (fraction of image width/height).
-    Returns 'open_palm', 'fist', or None (gesture not recognized).
+    Returns a finger count (0, 1, 2, or 5), or None if not a recognized shape.
 
-    For each of the 4 main fingers, we check whether the fingertip is
-    ABOVE its middle knuckle (smaller y = higher up in the image = finger
-    extended) or BELOW it (finger curled down = fist).
+    For the 4 main fingers, we check whether the fingertip is ABOVE its
+    middle knuckle (smaller y = higher up in the image = finger extended)
+    or BELOW it (finger curled down).
+
+    The thumb is checked differently (sideways motion, not up/down),
+    comparing the thumb tip's x position to its base knuckle.
     """
     tips = [8, 12, 16, 20]   # index, middle, ring, pinky fingertip
     pips = [6, 10, 14, 18]   # the knuckle joint just below each fingertip
@@ -72,21 +75,35 @@ def classify_gesture(landmarks):
         if landmarks[tip][1] < landmarks[pip][1]:
             fingers_up += 1
 
-    if fingers_up >= 3:
-        return "open_palm"
+    # Thumb: only counts toward the "5 fingers" (open palm) gesture.
+    # landmark 4 = thumb tip, landmark 2 = base knuckle of thumb.
+    thumb_out = abs(landmarks[4][0] - landmarks[2][0]) > 0.08
+
+    if fingers_up == 4 and thumb_out:
+        return 5   # open palm, all 5 fingers
     if fingers_up == 0:
-        return "fist"
-    return None  # in-between position, ignore to avoid false triggers
+        return 0   # fist
+    if fingers_up == 1:
+        return 1   # one finger (index)
+    if fingers_up == 2:
+        return 2   # two fingers (peace sign)
+    return None  # anything else (e.g. 3-4 fingers without thumb) is ignored
 
 
 def trigger_action(gesture):
     global last_status
-    if gesture == "open_palm":
+    if gesture == 0:
         pyautogui.press("playpause")
-        last_status = "Open palm detected -> Play/Pause"
-    elif gesture == "fist":
+        last_status = "Fist detected -> Play/Pause"
+    elif gesture == 1:
+        pyautogui.press("volumeup")
+        last_status = "1 finger detected -> Volume Up"
+    elif gesture == 2:
+        pyautogui.press("volumedown")
+        last_status = "2 fingers detected -> Volume Down"
+    elif gesture == 5:
         pyautogui.press("volumemute")
-        last_status = "Fist detected -> Mute toggled"
+        last_status = "Open palm detected -> Mute toggled"
 
 
 def process_frame(jpeg_bytes):
